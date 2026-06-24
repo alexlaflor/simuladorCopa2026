@@ -3,7 +3,8 @@ import { useState, useMemo, useCallback, useRef } from "react";
 // ─── DADOS ────────────────────────────────────────────────────────────────────
 const FLAGS={MEX:"🇲🇽",RSA:"🇿🇦",KOR:"🇰🇷",CZE:"🇨🇿",CAN:"🇨🇦",BIH:"🇧🇦",QAT:"🇶🇦",SUI:"🇨🇭",BRA:"🇧🇷",MAR:"🇲🇦",SCO:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",HAI:"🇭🇹",USA:"🇺🇸",PAR:"🇵🇾",AUS:"🇦🇺",TUR:"🇹🇷",GER:"🇩🇪",CIV:"🇨🇮",ECU:"🇪🇨",CUR:"🇨🇼",NED:"🇳🇱",JPN:"🇯🇵",SWE:"🇸🇪",TUN:"🇹🇳",EGY:"🇪🇬",IRN:"🇮🇷",BEL:"🇧🇪",NZL:"🇳🇿",ESP:"🇪🇸",URU:"🇺🇾",CPV:"🇨🇻",KSA:"🇸🇦",NOR:"🇳🇴",FRA:"🇫🇷",SEN:"🇸🇳",IRQ:"🇮🇶",ARG:"🇦🇷",AUT:"🇦🇹",JOR:"🇯🇴",ALG:"🇩🇿",COL:"🇨🇴",COD:"🇨🇩",POR:"🇵🇹",UZB:"🇺🇿",ENG:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",GHA:"🇬🇭",PAN:"🇵🇦",CRO:"🇭🇷"};
 const NAMES={MEX:"México",RSA:"África do Sul",KOR:"Coreia do Sul",CZE:"Tchéquia",CAN:"Canadá",BIH:"Bósnia",QAT:"Catar",SUI:"Suíça",BRA:"Brasil",MAR:"Marrocos",SCO:"Escócia",HAI:"Haiti",USA:"EUA",PAR:"Paraguai",AUS:"Austrália",TUR:"Turquia",GER:"Alemanha",CIV:"C.Marfim",ECU:"Equador",CUR:"Curaçao",NED:"Holanda",JPN:"Japão",SWE:"Suécia",TUN:"Tunísia",EGY:"Egito",IRN:"Irã",BEL:"Bélgica",NZL:"N.Zelândia",ESP:"Espanha",URU:"Uruguai",CPV:"Cabo Verde",KSA:"Ar.Saudita",NOR:"Noruega",FRA:"França",SEN:"Senegal",IRQ:"Iraque",ARG:"Argentina",AUT:"Áustria",JOR:"Jordânia",ALG:"Argélia",COL:"Colômbia",COD:"Congo RD",POR:"Portugal",UZB:"Uzbequistão",ENG:"Inglaterra",GHA:"Gana",PAN:"Panamá",CRO:"Croácia"};
-const STR={ARG:95,FRA:93,BRA:91,ENG:88,ESP:87,GER:86,POR:84,NED:83,NOR:80,URU:79,BEL:77,COL:76,USA:75,MEX:74,JPN:73,MAR:73,KOR:69,CRO:68,SUI:68,AUS:67,SCO:65,ECU:64,SWE:64,CAN:63,SEN:62,GHA:61,EGY:60,IRN:58,CPV:55,IRQ:54,CZE:66,TUR:65,PAR:62,CIV:68,QAT:50,BIH:54,RSA:52,HAI:42,TUN:53,NZL:48,KSA:55,JOR:51,ALG:56,COD:58,UZB:51,PAN:50,CUR:44,AUT:70};
+const STR_DEFAULT={ARG:95,FRA:93,BRA:91,ENG:88,ESP:87,GER:86,POR:84,NED:83,NOR:80,URU:79,BEL:77,COL:76,USA:75,MEX:74,JPN:73,MAR:73,KOR:69,CRO:68,SUI:68,AUS:67,SCO:65,ECU:64,SWE:64,CAN:63,SEN:62,GHA:61,EGY:60,IRN:58,CPV:55,IRQ:54,CZE:66,TUR:65,PAR:62,CIV:68,QAT:50,BIH:54,RSA:52,HAI:42,TUN:53,NZL:48,KSA:55,JOR:51,ALG:56,COD:58,UZB:51,PAN:50,CUR:44,AUT:70};
+let STR = {...STR_DEFAULT};
 const GROUPS={
   A:{name:"Grupo A",teams:["MEX","KOR","CZE","RSA"],matches:[{r:1,h:"MEX",a:"RSA",hs:2,as:0,done:true},{r:1,h:"KOR",a:"CZE",hs:2,as:1,done:true},{r:2,h:"CZE",a:"RSA",hs:1,as:1,done:true},{r:2,h:"MEX",a:"KOR",hs:1,as:0,done:true},{r:3,h:"CZE",a:"MEX",hs:null,as:null,done:false},{r:3,h:"RSA",a:"KOR",hs:null,as:null,done:false}]},
   B:{name:"Grupo B",teams:["CAN","SUI","BIH","QAT"],matches:[{r:1,h:"CAN",a:"BIH",hs:1,as:1,done:true},{r:1,h:"QAT",a:"SUI",hs:1,as:1,done:true},{r:2,h:"SUI",a:"BIH",hs:4,as:1,done:true},{r:2,h:"CAN",a:"QAT",hs:6,as:0,done:true},{r:3,h:"SUI",a:"CAN",hs:null,as:null,done:false},{r:3,h:"BIH",a:"QAT",hs:null,as:null,done:false}]},
@@ -1096,7 +1097,54 @@ function initMatches() {
   return result;
 }
 
-// ─── COMPONENTE DE EDIÇÃO DE JOGO ─────────────────────────────────────────────
+// ─── EDITOR DE FORÇA (STR) ────────────────────────────────────────────────────
+function StrBar({ value, max=100 }) {
+  const pct = Math.round(value / max * 100);
+  const color = value >= 80 ? "#e74c3c" : value >= 70 ? "#e67e22" : value >= 60 ? "#f1c40f" : value >= 50 ? "#2ecc71" : "#95a5a6";
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:4,flex:1}}>
+      <div style={{flex:1,height:4,background:"rgba(255,255,255,0.1)",borderRadius:2,overflow:"hidden"}}>
+        <div style={{width:`${pct}%`,height:"100%",background:color,borderRadius:2,transition:"width 0.2s"}}/>
+      </div>
+      <span style={{fontSize:10,color,fontWeight:700,minWidth:20,textAlign:"right"}}>{value}</span>
+    </div>
+  );
+}
+
+function StrEditorPanel({ teams, str, onStrChange, color }) {
+  return (
+    <div style={{
+      marginTop:8, padding:"8px 10px", borderRadius:6,
+      background:"rgba(0,0,0,0.25)", border:`1px solid ${color}33`,
+    }}>
+      <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",letterSpacing:1,textTransform:"uppercase",marginBottom:6}}>
+        ⚡ Força relativa (1–99)
+      </div>
+      {teams.map(t => (
+        <div key={t} style={{display:"flex",alignItems:"center",gap:6,marginBottom:5}}>
+          <span style={{fontSize:11}}>{FLAGS[t]}</span>
+          <span style={{fontSize:10,color:"#e8eaf6",minWidth:70}}>{NAMES[t]}</span>
+          <StrBar value={str[t]||50}/>
+          <input
+            type="range" min={1} max={99} value={str[t]||50}
+            onChange={e => onStrChange(t, parseInt(e.target.value))}
+            style={{width:70,accentColor:color,cursor:"pointer",flexShrink:0}}
+          />
+          <input
+            type="number" min={1} max={99} value={str[t]||50}
+            onChange={e => {
+              const v = Math.max(1,Math.min(99,parseInt(e.target.value)||1));
+              onStrChange(t, v);
+            }}
+            style={{width:36,height:20,textAlign:"center",borderRadius:4,
+              border:`1px solid ${color}66`,background:"rgba(0,0,0,0.4)",
+              color:"#fff",fontSize:11,fontWeight:700,outline:"none",padding:0}}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 function MatchRowEditable(props) {
   const m = props.match, color = props.color;
   const onChange = props.onChange;
@@ -1165,9 +1213,11 @@ function MatchRowEditable(props) {
 
 // ─── GRUPO COM EDIÇÃO ─────────────────────────────────────────────────────────
 function GroupCardEditable(props) {
-  const gk=props.gk, matches=props.matches, allProbs=props.allProbs, onMatchChange=props.onMatchChange;
+  const gk=props.gk, matches=props.matches, allProbs=props.allProbs;
+  const onMatchChange=props.onMatchChange, str=props.str, onStrChange=props.onStrChange;
   const color=GC[gk];
   const g=GROUPS[gk];
+  const [showStr, setShowStr] = useState(false);
 
   // Montar dados para standings usando matches editados
   function getEditedStats() {
@@ -1244,6 +1294,20 @@ function GroupCardEditable(props) {
           <MatchRowEditable key={m.id} match={m} color={color} onChange={onMatchChange}/>
         ))}
       </div>
+
+      {/* Botão e painel de força */}
+      <button
+        onClick={() => setShowStr(s => !s)}
+        style={{
+          marginTop:8, width:"100%", padding:"5px 0", borderRadius:5, border:`1px solid ${color}44`,
+          background:showStr?`${color}22`:"transparent", color:showStr?color:"rgba(255,255,255,0.4)",
+          fontSize:10, cursor:"pointer", fontWeight:600, letterSpacing:0.5,
+        }}>
+        {showStr ? "▲ Ocultar força" : "⚡ Editar força relativa"}
+      </button>
+      {showStr && (
+        <StrEditorPanel teams={g.teams} str={str} onStrChange={onStrChange} color={color}/>
+      )}
     </div>
   );
 }
@@ -1254,6 +1318,17 @@ export default function App() {
   const [probs, setProbs] = useState(null);
   const [running, setRunning] = useState(false);
   const [simCount, setSimCount] = useState(0);
+  const [str, setStr] = useState({...STR_DEFAULT});
+
+  // Atualizar força de um time
+  const handleStrChange = useCallback((team, value) => {
+    setStr(prev => ({...prev, [team]: value}));
+  }, []);
+
+  // Resetar força para padrão
+  const handleStrReset = useCallback(() => {
+    setStr({...STR_DEFAULT});
+  }, []);
 
   const GOLD="#ffd700", BORD="rgba(255,255,255,0.09)", TEXT="#e8eaf6", MUTE="rgba(255,255,255,0.38)";
 
@@ -1293,17 +1368,17 @@ export default function App() {
 
   // Rodar simulação
   const handleRun = useCallback(() => {
+    // Atualizar STR global para a simulação usar
+    Object.assign(STR, str);
     setRunning(true);
     setSimCount(0);
-    // Usar setTimeout para não bloquear UI
     setTimeout(() => {
       const editedGroups = buildGroupsWithEdits();
-      // Substituir GROUPS temporariamente via closure
       const result = runSimulationWithGroups(editedGroups, 4000, (n) => setSimCount(n));
       setProbs(result);
       setRunning(false);
     }, 50);
-  }, [matches]);
+  }, [matches, str]);
 
   // Limpar previsões
   const handleClear = useCallback(() => {
@@ -1337,6 +1412,9 @@ export default function App() {
                 <div>{filledTotal}/{pendingTotal} jogos com previsão</div>
                 {probs && <div style={{color:"#4fc3f7"}}>✓ Simulação concluída</div>}
               </div>
+              <button onClick={handleStrReset} title="Resetar força para valores padrão" style={{padding:"6px 12px",borderRadius:6,border:"1px solid rgba(255,255,255,0.2)",cursor:"pointer",fontSize:11,fontWeight:600,background:"transparent",color:"rgba(255,200,100,0.7)"}}>
+                ↺ Reset força
+              </button>
               <button onClick={handleClear} style={{padding:"6px 12px",borderRadius:6,border:"1px solid rgba(255,255,255,0.2)",cursor:"pointer",fontSize:11,fontWeight:600,background:"transparent",color:MUTE}}>
                 Limpar
               </button>
@@ -1368,7 +1446,7 @@ export default function App() {
         {tab==="grupos" && (
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:12}}>
             {Object.keys(GROUPS).map(gk => (
-              <GroupCardEditable key={gk} gk={gk} matches={matches[gk]} allProbs={probs} onMatchChange={handleMatchChange}/>
+              <GroupCardEditable key={gk} gk={gk} matches={matches[gk]} allProbs={probs} onMatchChange={handleMatchChange} str={str} onStrChange={handleStrChange}/>
             ))}
           </div>
         )}
