@@ -1,0 +1,1 @@
+# simuladorCopa2026
