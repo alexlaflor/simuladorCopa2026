@@ -7,8 +7,8 @@ const STR_DEFAULT={ARG:95,FRA:93,BRA:91,ENG:88,ESP:87,GER:86,POR:84,NED:83,NOR:8
 let STR = {...STR_DEFAULT};
 const GROUPS={
   A:{name:"Grupo A",teams:["MEX","KOR","CZE","RSA"],matches:[{r:1,h:"MEX",a:"RSA",hs:2,as:0,done:true},{r:1,h:"KOR",a:"CZE",hs:2,as:1,done:true},{r:2,h:"CZE",a:"RSA",hs:1,as:1,done:true},{r:2,h:"MEX",a:"KOR",hs:1,as:0,done:true},{r:3,h:"CZE",a:"MEX",hs:null,as:null,done:false},{r:3,h:"RSA",a:"KOR",hs:null,as:null,done:false}]},
-  B:{name:"Grupo B",teams:["CAN","SUI","BIH","QAT"],matches:[{r:1,h:"CAN",a:"BIH",hs:1,as:1,done:true},{r:1,h:"QAT",a:"SUI",hs:1,as:1,done:true},{r:2,h:"SUI",a:"BIH",hs:4,as:1,done:true},{r:2,h:"CAN",a:"QAT",hs:6,as:0,done:true},{r:3,h:"SUI",a:"CAN",hs:null,as:null,done:false},{r:3,h:"BIH",a:"QAT",hs:null,as:null,done:false}]},
-  C:{name:"Grupo C",teams:["BRA","MAR","SCO","HAI"],matches:[{r:1,h:"BRA",a:"MAR",hs:1,as:1,done:true},{r:1,h:"SCO",a:"HAI",hs:1,as:0,done:true},{r:2,h:"MAR",a:"SCO",hs:1,as:0,done:true},{r:2,h:"BRA",a:"HAI",hs:3,as:0,done:true},{r:3,h:"SCO",a:"BRA",hs:null,as:null,done:false},{r:3,h:"MAR",a:"HAI",hs:null,as:null,done:false}]},
+  B:{name:"Grupo B",teams:["CAN","SUI","BIH","QAT"],matches:[{r:1,h:"CAN",a:"BIH",hs:1,as:1,done:true},{r:1,h:"QAT",a:"SUI",hs:1,as:1,done:true},{r:2,h:"SUI",a:"BIH",hs:4,as:1,done:true},{r:2,h:"CAN",a:"QAT",hs:6,as:0,done:true},{r:3,h:"SUI",a:"CAN",hs:2,as:1,done:true},{r:3,h:"BIH",a:"QAT",hs:3,as:1,done:true}]},
+  C:{name:"Grupo C",teams:["BRA","MAR","SCO","HAI"],matches:[{r:1,h:"BRA",a:"MAR",hs:1,as:1,done:true},{r:1,h:"SCO",a:"HAI",hs:1,as:0,done:true},{r:2,h:"MAR",a:"SCO",hs:1,as:0,done:true},{r:2,h:"BRA",a:"HAI",hs:3,as:0,done:true},{r:3,h:"SCO",a:"BRA",hs:0,as:3,done:true},{r:3,h:"MAR",a:"HAI",hs:4,as:2,done:true}]},
   D:{name:"Grupo D",teams:["USA","AUS","PAR","TUR"],matches:[{r:1,h:"USA",a:"PAR",hs:4,as:1,done:true},{r:1,h:"AUS",a:"TUR",hs:2,as:0,done:true},{r:2,h:"USA",a:"AUS",hs:2,as:0,done:true},{r:2,h:"TUR",a:"PAR",hs:0,as:1,done:true},{r:3,h:"TUR",a:"USA",hs:null,as:null,done:false},{r:3,h:"PAR",a:"AUS",hs:null,as:null,done:false}]},
   E:{name:"Grupo E",teams:["GER","CIV","ECU","CUR"],matches:[{r:1,h:"GER",a:"CUR",hs:7,as:1,done:true},{r:1,h:"CIV",a:"ECU",hs:1,as:0,done:true},{r:2,h:"GER",a:"CIV",hs:2,as:1,done:true},{r:2,h:"ECU",a:"CUR",hs:0,as:0,done:true},{r:3,h:"ECU",a:"GER",hs:null,as:null,done:false},{r:3,h:"CUR",a:"CIV",hs:null,as:null,done:false}]},
   F:{name:"Grupo F",teams:["NED","JPN","SWE","TUN"],matches:[{r:1,h:"NED",a:"JPN",hs:2,as:2,done:true},{r:1,h:"SWE",a:"TUN",hs:5,as:1,done:true},{r:2,h:"NED",a:"SWE",hs:5,as:1,done:true},{r:2,h:"TUN",a:"JPN",hs:0,as:4,done:true},{r:3,h:"JPN",a:"SWE",hs:null,as:null,done:false},{r:3,h:"TUN",a:"NED",hs:null,as:null,done:false}]},
@@ -1082,7 +1082,192 @@ function BracketView(props) {
   );
 }
 
-// ─── INICIALIZAR MATCHES COM IDs ──────────────────────────────────────────────
+// ─── ABA DE MELHORES 3ºS ─────────────────────────────────────────────────────
+function ThirdsView({ allProbs }) {
+  const BORD = "rgba(255,255,255,0.09)";
+  const TEXT = "#e8eaf6";
+  const MUTE = "rgba(255,255,255,0.38)";
+  const GOLD = "#ffd700";
+  const CARD = "rgba(255,255,255,0.04)";
+
+  if (!allProbs) {
+    return (
+      <div style={{textAlign:"center",padding:"60px 20px",color:MUTE}}>
+        <div style={{fontSize:40,marginBottom:16}}>🔀</div>
+        <div style={{fontSize:16,fontWeight:700,color:TEXT,marginBottom:8}}>Simulação não rodada ainda</div>
+        <div style={{fontSize:13}}>Rode a simulação para ver a classificação dos melhores 3ºs lugares.</div>
+      </div>
+    );
+  }
+
+  // Coletar probabilidade de cada time terminar em 3º em seu grupo
+  const allThirds = Object.keys(GROUPS).flatMap(gk => {
+    const p = allProbs.groupProbs && allProbs.groupProbs[gk];
+    if (!p) return [];
+    return Object.entries(p)
+      .map(([team, pcts]) => ({ team, group: gk, pct3rd: pcts[2] || 0 }))
+      .filter(c => c.pct3rd > 0);
+  }).sort((a, b) => b.pct3rd - a.pct3rd);
+
+  // Para cada slot de 3º (A,B,D,E,G,I,K,L), mostrar candidatos via slotProbs
+  const SLOT_INFO = {
+    A: { match:"M79", versus:"1ºA", allowed:"C/E/F/H/I" },
+    B: { match:"M85", versus:"1ºB", allowed:"E/F/G/I/J" },
+    D: { match:"M81", versus:"1ºD", allowed:"B/E/F/I/J" },
+    E: { match:"M74", versus:"1ºE", allowed:"A/B/C/D/F" },
+    G: { match:"M82", versus:"1ºG", allowed:"A/E/H/I/J" },
+    I: { match:"M77", versus:"1ºI", allowed:"C/D/F/G/H" },
+    K: { match:"M87", versus:"1ºK", allowed:"D/E/I/J/L" },
+    L: { match:"M80", versus:"1ºL", allowed:"E/H/I/J/K" },
+  };
+
+  // Calcular para cada time: probabilidade de se classificar como melhor 3º (qualquer slot)
+  const teamQualProb = {};
+  Object.values(allProbs.slotProbs || {}).forEach(entries => {
+    (entries || []).forEach(({ team, pct }) => {
+      teamQualProb[team] = (teamQualProb[team] || 0) + pct;
+    });
+  });
+  // Normalizar: somar as 8 probabilidades de slots independentes
+  // A probabilidade real de classificar = soma das aparições em qualquer slot / 8
+  // Mas como cada time aparece em no máximo 1 slot por simulação, é direto
+  const teamQualList = Object.entries(teamQualProb)
+    .map(([team, pct]) => ({ team, group: Object.keys(GROUPS).find(g => GROUPS[g].teams.includes(team)), pct: Math.min(pct, 100) }))
+    .sort((a, b) => b.pct - a.pct);
+
+  return (
+    <div>
+      <div style={{textAlign:"center",padding:"12px 0 16px",borderBottom:`1px solid ${BORD}`,marginBottom:20}}>
+        <div style={{fontSize:10,color:MUTE,letterSpacing:3}}>CLASSIFICAÇÃO SIMULADA</div>
+        <div style={{fontSize:18,fontWeight:900,color:TEXT,marginTop:4}}>MELHORES 3ºs LUGARES</div>
+        <div style={{fontSize:11,color:MUTE,marginTop:4}}>
+          8 dos 12 terceiros se classificam · seleção via Annex C (495 combinações)
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+
+        {/* LADO ESQUERDO: ranking geral de probabilidade de classificar */}
+        <div>
+          <div style={{fontSize:11,color:GOLD,fontWeight:700,marginBottom:10,letterSpacing:1}}>
+            🏅 Probabilidade de se classificar como melhor 3º
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+            {teamQualList.slice(0, 16).map((c, i) => {
+              const color = GC[c.group] || "#888";
+              const isTop8 = i < 8;
+              return (
+                <div key={c.team} style={{
+                  display:"flex", alignItems:"center", gap:8, padding:"6px 10px",
+                  borderRadius:6, border:`1px solid ${isTop8 ? color+"55" : BORD}`,
+                  background: isTop8 ? `${color}12` : CARD,
+                }}>
+                  <span style={{
+                    width:20, height:20, borderRadius:"50%", display:"flex",
+                    alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700,
+                    background: i===0?GOLD:i===1?"#c0c0c0":i===2?"#cd7f32":isTop8?color+"44":"transparent",
+                    color: i<=2?"#000":isTop8?color:MUTE, flexShrink:0,
+                  }}>{i+1}</span>
+                  <span style={{fontSize:10,background:color+"33",color,borderRadius:3,padding:"0 5px",fontWeight:700,flexShrink:0}}>{c.group}</span>
+                  <span style={{fontSize:13}}>{FLAGS[c.team]}</span>
+                  <span style={{flex:1,fontSize:11,color:TEXT,fontWeight:isTop8?600:400}}>{NAMES[c.team]}</span>
+                  {isTop8 && <span style={{fontSize:9,color:color,background:color+"22",borderRadius:3,padding:"1px 5px",flexShrink:0}}>✓ top 8</span>}
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    <div style={{width:80,height:6,background:"rgba(255,255,255,0.08)",borderRadius:3,overflow:"hidden"}}>
+                      <div style={{width:`${c.pct}%`,height:"100%",background:isTop8?color:"#555",borderRadius:3}}/>
+                    </div>
+                    <span style={{fontSize:11,color:isTop8?color:MUTE,fontWeight:700,minWidth:32,textAlign:"right"}}>{c.pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* LADO DIREITO: distribuição por slot */}
+        <div>
+          <div style={{fontSize:11,color:"#4fc3f7",fontWeight:700,marginBottom:10,letterSpacing:1}}>
+            🎯 Distribuição por vaga no chaveamento
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {Object.entries(SLOT_INFO).map(([slotGrp, info]) => {
+              const entries = (allProbs.slotProbs && allProbs.slotProbs[slotGrp]) || [];
+              const color = GC[slotGrp] || "#888";
+              return (
+                <div key={slotGrp} style={{
+                  background:CARD, border:`1px solid ${color}44`,
+                  borderRadius:8, padding:"8px 10px",
+                }}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                    <div style={{width:22,height:22,borderRadius:5,background:color,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:11,color:"#000",flexShrink:0}}>{slotGrp}</div>
+                    <div>
+                      <div style={{fontSize:10,color,fontWeight:700}}>{info.match} · {info.versus} vs 3º lugar</div>
+                      <div style={{fontSize:9,color:MUTE}}>grupos candidatos: {info.allowed}</div>
+                    </div>
+                  </div>
+                  {entries.length === 0
+                    ? <div style={{fontSize:10,color:MUTE,fontStyle:"italic"}}>Nenhum candidato</div>
+                    : entries.slice(0, 4).map((c, i) => {
+                      const tcolor = GC[Object.keys(GROUPS).find(g => GROUPS[g].teams.includes(c.team))] || "#888";
+                      return (
+                        <div key={c.team} style={{display:"flex",alignItems:"center",gap:5,marginBottom:i<entries.length-1?3:0}}>
+                          <span style={{fontSize:9,background:tcolor+"33",color:tcolor,borderRadius:2,padding:"0 3px",minWidth:14,textAlign:"center",flexShrink:0}}>
+                            {Object.keys(GROUPS).find(g => GROUPS[g].teams.includes(c.team))}
+                          </span>
+                          <span style={{fontSize:12}}>{FLAGS[c.team]}</span>
+                          <span style={{flex:1,fontSize:10,color:TEXT}}>{NAMES[c.team]}</span>
+                          <div style={{width:60,height:4,background:"rgba(255,255,255,0.08)",borderRadius:2,overflow:"hidden"}}>
+                            <div style={{width:`${c.pct}%`,height:"100%",background:color,borderRadius:2}}/>
+                          </div>
+                          <span style={{fontSize:10,color,fontWeight:700,minWidth:28,textAlign:"right"}}>{c.pct}%</span>
+                        </div>
+                      );
+                    })
+                  }
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+
+      {/* Tabela completa de 3ºs por grupo */}
+      <div style={{marginTop:20,background:CARD,border:`1px solid ${BORD}`,borderRadius:8,padding:12}}>
+        <div style={{fontSize:11,color:MUTE,fontWeight:700,marginBottom:10,letterSpacing:1}}>
+          📊 Probabilidade de terminar em 3º por grupo
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:8}}>
+          {Object.keys(GROUPS).map(gk => {
+            const p = allProbs.groupProbs && allProbs.groupProbs[gk];
+            const color = GC[gk];
+            const candidates = p
+              ? Object.entries(p).map(([t, pcts]) => ({t, pct: pcts[2]||0})).filter(c=>c.pct>0).sort((a,b)=>b.pct-a.pct)
+              : [];
+            return (
+              <div key={gk} style={{background:`${color}0d`,border:`1px solid ${color}44`,borderRadius:6,padding:"8px 10px"}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                  <div style={{width:20,height:20,borderRadius:4,background:color,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:11,color:"#000"}}>{gk}</div>
+                  <span style={{fontSize:11,color,fontWeight:700}}>{GROUPS[gk].name}</span>
+                </div>
+                {candidates.map((c,i) => (
+                  <div key={c.t} style={{display:"flex",alignItems:"center",gap:4,marginBottom:i<candidates.length-1?3:0}}>
+                    <span style={{fontSize:12}}>{FLAGS[c.t]}</span>
+                    <span style={{flex:1,fontSize:10,color:TEXT}}>{NAMES[c.t]}</span>
+                    <div style={{width:40,height:4,background:"rgba(255,255,255,0.08)",borderRadius:2,overflow:"hidden"}}>
+                      <div style={{width:`${c.pct}%`,height:"100%",background:color,borderRadius:2}}/>
+                    </div>
+                    <span style={{fontSize:10,color,fontWeight:700,minWidth:26,textAlign:"right"}}>{c.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 function initMatches() {
   const result = {};
   Object.keys(GROUPS).forEach(gk => {
@@ -1404,7 +1589,7 @@ export default function App() {
             <span style={{fontSize:22}}>⚽</span>
             <div>
               <div style={{fontSize:17,fontWeight:900,letterSpacing:1}}>Copa do Mundo <span style={{color:GOLD}}>2026</span></div>
-              <div style={{fontSize:9,color:MUTE,letterSpacing:2}}>EUA · MÉXICO · CANADÁ · 48 SELEÇÕES</div>
+              <div style={{fontSize:9,color:MUTE,letterSpacing:2}}>EUA · MÉXICO · CANADÁ · 48 SELEÇÕES · 24/06/2026</div>
             </div>
             <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:10}}>
               {/* Controles de simulação */}
@@ -1426,7 +1611,7 @@ export default function App() {
             </div>
           </div>
           <div style={{display:"flex",gap:8,alignItems:"center"}}>
-            {[["grupos","⚽ Fase de Grupos"],["chaveamento","🏆 Chaveamento"]].map(function(item) {
+            {[["grupos","⚽ Fase de Grupos"],["terceiros","🔀 Melhores 3ºs"],["chaveamento","🏆 Chaveamento"]].map(function(item) {
               return (
                 <button key={item[0]} onClick={()=>setTab(item[0])} style={{padding:"6px 14px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:tab===item[0]?GOLD:"rgba(255,255,255,0.08)",color:tab===item[0]?"#000":TEXT}}>
                   {item[1]}
@@ -1450,6 +1635,7 @@ export default function App() {
             ))}
           </div>
         )}
+        {tab==="terceiros" && <ThirdsView allProbs={probs}/>}
         {tab==="chaveamento" && (
           probs
             ? <BracketView allProbs={probs}/>
